@@ -1,9 +1,0 @@
-./
-./usr
-./usr/sbin
-./usr/sbin/askfirst
-./usr/sbin/procd
-./usr/sbin/udevtrigger
-./usr/sbin/upgraded
-./usr/sbin/init
-./host
