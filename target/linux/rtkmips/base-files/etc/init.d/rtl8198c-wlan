@@ -1,0 +1,8 @@
+#!/bin/sh /etc/rc.common
+START=25
+USE_PROCD=1
+
+start_service() {
+    /sbin/modprobe rtl8192cd 2>/dev/null || true
+    [ -x /sbin/wifi ] && /sbin/wifi up 2>/dev/null || true
+}
