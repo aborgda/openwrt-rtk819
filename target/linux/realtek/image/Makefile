@@ -162,8 +162,8 @@ endif # CONFIG_TARGET_realtek_rtl8881a
 #
 # RTL8198C board profiles
 #
-# These profiles use the Realtek cs6c/r6cr two-record format and preserve
-# the flash/header addresses observed in the supplied vendor images.
+# Two-record Realtek image: cs6c/cr6c kernel + r6cr rootfs.
+# Flash/header addresses are taken from the supplied board images.
 #
 define SingleProfile8198C
 
@@ -173,14 +173,14 @@ define SingleProfile8198C
   endef
 
   define Image/Build/Profile/$(1)/squashfs
-	$(call Image/BuildLoader,loader-$(SUBTARGET)-$(1),bin,$(call mkcmdline,$(1),$(2),$(3),$(6)),$(5))
+	$(call Image/BuildLoader,loader-$(SUBTARGET)-$(1),bin,$(call mkcmdline,$(1),$(2),$(3),$(7)),$(5))
 	cvimg-$(SUBTARGET) linux $(KDIR)/loader-$(SUBTARGET)-$(1).bin $(BIN_DIR)/$(IMG_PREFIX)-$(1)-kernel.bin $(5) $(6)
 	dd if=$(KDIR)/root.squashfs of=$(KDIR)/root.squashfs-4k bs=4k conv=sync
 	$(call add_jffs2_mark,$(KDIR)/root.squashfs-4k)
-	cvimg-$(SUBTARGET) root $(KDIR)/root.squashfs-4k $(BIN_DIR)/$(IMG_PREFIX)-$(1)-rootfs.bin $(7) $(8)
+	cvimg-$(SUBTARGET) root $(KDIR)/root.squashfs-4k $(BIN_DIR)/$(IMG_PREFIX)-$(1)-rootfs.bin $(8) $(9)
 	cat $(BIN_DIR)/$(IMG_PREFIX)-$(1)-kernel.bin $(BIN_DIR)/$(IMG_PREFIX)-$(1)-rootfs.bin > $(BIN_DIR)/$(IMG_PREFIX)-$(1)-fw.bin
 	rm -f $(BIN_DIR)/$(IMG_PREFIX)-$(1)-kernel.bin $(BIN_DIR)/$(IMG_PREFIX)-$(1)-rootfs.bin
-	@size=$(stat -c%s $(BIN_DIR)/$(IMG_PREFIX)-$(1)-fw.bin); max=$(9); test $size -le $max || { echo "ERROR: $(1) image $size bytes exceeds $max-byte flash"; exit 1; }
+	@size=$$(stat -c%s $(BIN_DIR)/$(IMG_PREFIX)-$(1)-fw.bin); max=$(10); test $$size -le $$max || { echo "ERROR: $(1) image $$size bytes exceeds $$max-byte flash"; exit 1; }
   endef
 
   SINGLE_PROFILES += $(1)
@@ -189,14 +189,10 @@ endef
 
 ifeq ($(CONFIG_TARGET_realtek_rtl8198c),y)
 
-# GN866 AC 16MiB: kernel 0x30000, rootfs 0x260000.
-$(eval $(call SingleProfile8198C,GN866_AC,ttyS0,115200,root=/dev/mtdblock4,0x80A00000,0xFFFFFFF0,0x002D0000,0x00260000,16777216))
-
-# LG7100 32MiB: addresses taken from the supplied GAPM-7100 image.
-$(eval $(call SingleProfile8198C,LG7100,ttyS0,115200,root=/dev/mtdblock4,0x80C00000,0x00030000,0x002D0000,0x009F0000,33554432))
-
-# SK337 32MiB: addresses taken from the supplied rush-337ac dump.
-$(eval $(call SingleProfile8198C,SK337,ttyS0,115200,root=/dev/mtdblock4,0x81000000,0x00031000,0x000F0000,0x00210000,33554432))
+# args: profile, console, baud, rootdev, lzma_start, kernel_burn, linuxpart, root_start, root_burn, max_flash
+$(eval $(call SingleProfile8198C,GN866_AC,ttyS0,115200,root=/dev/mtdblock4,0x80A00000,0xFFFFFFF0,00030000,0x002D0000,0x00260000,16777216))
+$(eval $(call SingleProfile8198C,LG7100,ttyS0,115200,root=/dev/mtdblock4,0x80C00000,0x00030000,00030000,0x002D0000,0x009F0000,33554432))
+$(eval $(call SingleProfile8198C,SK337,ttyS0,115200,root=/dev/mtdblock4,0x81000000,0x00031000,00031000,0x000F0000,0x00210000,33554432))
 
 endif
 
