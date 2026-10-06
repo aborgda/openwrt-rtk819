@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 ARCH:=rlx
 BOARD:=realtek
 BOARDNAME:=Realtek
-SUBTARGETS:=rtl819xd rtl8196e rtl8881a
+SUBTARGETS:=rtl819xd rtl8196e rtl8881a rtl8198c
 FEATURES:=squashfs
 LINUX_VERSION:=3.10.49
 
