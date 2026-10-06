@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+
+START=18
+STOP=90
+
+start() {
+	# The Realtek vendor driver reads board/RF defaults from flash at probe.
+	# Bring both possible radios up after the driver has created wlan0/wlan1.
+	for n in wlan0 wlan1; do
+		[ -e /sys/class/net/$n ] || continue
+		ip link set dev $n up 2>/dev/null || ifconfig $n up 2>/dev/null
+	done
+}
+
+stop() {
+	for n in wlan0 wlan1; do
+		[ -e /sys/class/net/$n ] || continue
+		ip link set dev $n down 2>/dev/null || ifconfig $n down 2>/dev/null
+	done
+}
