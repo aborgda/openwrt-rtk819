@@ -1,0 +1,113 @@
+name: RTL8198C GN866-LG7100-SK337 build
+
+on:
+  push:
+    branches:
+      - rtl8198c-gn866-lg7100-sk337
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GN866-AC
+            config: configs/rtl8198c_gn866_ac
+            image: rtl8198c-GN866_AC
+          - name: LG7100
+            config: configs/rtl8198c_lg7100
+            image: rtl8198c-LG7100
+          - name: SK337
+            config: configs/rtl8198c_sk337
+            image: rtl8198c-SK337
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: rtl8198c-gn866-lg7100-sk337
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !build_dir/
+            !staging_dir/
+            !tmp/
+            !dl/
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang flex bison gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3 python3-distutils rsync unzip zlib1g-dev file wget
+
+      - name: Prepare feeds and config
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          cp "${{ matrix.config }}" .config
+          make defconfig
+
+      - name: Build
+        run: |
+          make -j2 V=s
+
+      - name: Verify image
+        run: |
+          set -eu
+          echo "=== target images ==="
+          find bin -type f -maxdepth 3 -printf '%p %s bytes\n' | sort
+          case "${{ matrix.name }}" in
+            GN866-AC)
+              IMG="$(find bin -type f -name '*GN866_AC*fw.bin' | head -n1)"
+              test -n "$IMG"
+              test "$(stat -c%s "$IMG")" -le 16777216
+              ;;
+            LG7100)
+              IMG="$(find bin -type f -name '*LG7100*fw.bin' | head -n1)"
+              test -n "$IMG"
+              test "$(stat -c%s "$IMG")" -le 33554432
+              ;;
+            SK337)
+              IMG="$(find bin -type f -name '*SK337*fw.bin' | head -n1)"
+              test -n "$IMG"
+              test "$(stat -c%s "$IMG")" -le 33554432
+              ;;
+          esac
+          python3 - "$IMG" <<'PY'
+import struct, sys
+p=sys.argv[1]
+d=open(p,'rb').read()
+off=0
+records=[]
+while off + 16 <= len(d):
+    sig=d[off:off+4]
+    if sig not in (b'cs6c', b'cr6c', b'r6cr'):
+        break
+    start,burn,ln=struct.unpack('>III',d[off+4:off+16])
+    end=off+16+ln
+    if end>len(d):
+        raise SystemExit(f"bad record length at 0x{off:x}: {ln:x}")
+    payload=d[off+16:end]
+    chk=payload + (b'\0' if len(payload)&1 else b'')
+    if sum(struct.unpack('>'+'H'*(len(chk)//2),chk)) & 0xffff:
+        raise SystemExit(f"checksum failure for {sig!r}")
+    records.append((off,sig.decode(),start,burn,ln))
+    off=end
+print("records:", records)
+print("total:", len(d), "tail:", len(d)-off)
+if len(records) < 2:
+    raise SystemExit("expected kernel + rootfs records")
+PY
+
+      - name: Collect firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.image }}
+          path: |
+            bin/**/*.bin
+            bin/**/*.sha256
+          if-no-files-found: error
