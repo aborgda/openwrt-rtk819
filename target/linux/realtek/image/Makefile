@@ -193,7 +193,7 @@ ifeq ($(CONFIG_TARGET_realtek_rtl8198c),y)
 $(eval $(call SingleProfile8198C,GN866_AC,ttyS0,115200,root=/dev/mtdblock4,0x80A00000,0xFFFFFFF0,0x002D0000,0x00260000,16777216))
 
 # LG7100 32MiB: addresses taken from the supplied GAPM-7100 image.
-$(eval $(call SingleProfile8198C,LG7100,ttyS0,115200,root=/dev/mtdblock4,0x80C00000,0x00030000,0x002D0000,0x009F0000,33554432))
+$(eval $(call SingleProfile8198C,LG7100,ttyS0,115200,root=/dev/mtdblock4,0x81000000,0x00060000,0x001E0000,0x001E0000,33554432))
 
 # SK337 32MiB: addresses taken from the supplied rush-337ac dump.
 $(eval $(call SingleProfile8198C,SK337,ttyS0,115200,root=/dev/mtdblock4,0x81000000,0x00031000,0x000F0000,0x00210000,33554432))
