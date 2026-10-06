@@ -92,10 +92,13 @@ endef
 #
 # 98c move default linux 60000
 ifeq ($(CONFIG_TARGET_rtkmips_rtl8198c),y)
-# linun partition offset = 0x6000 
-# hw setting parttion offset = 0x20000
-ifeq ($(CONFIG_MTD_NAND_RTK),y)
-$(eval $(call SingleProfile,AP,ttyS0,38400,root=/dev/mtdblock3,0x80500000,800000,0))
+# GN866 AC: original 16 MiB dump uses kernel at 0x30000.
+ifeq ($(CONFIG_TARGET_PROFILE_GN866_AC),y)
+$(eval $(call SingleProfile,GN866_AC,ttyS0,38400,root=/dev/mtdblock2,0x80500000,30000,20000))
+else ifeq ($(CONFIG_TARGET_PROFILE_LG7100),y)
+$(eval $(call SingleProfile,LG7100,ttyS0,38400,root=/dev/mtdblock2,0x80500000,60000,20000))
+else ifeq ($(CONFIG_TARGET_PROFILE_SK337),y)
+$(eval $(call SingleProfile,SK337,ttyS0,38400,root=/dev/mtdblock2,0x80500000,60000,20000))
 else
 $(eval $(call SingleProfile,AP,ttyS0,38400,root=/dev/mtdblock2,0x80500000,60000,20000))
 endif
