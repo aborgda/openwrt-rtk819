@@ -3,6 +3,7 @@ name: RTL8198C GN866-LG7100-SK337 build
 on:
   push:
     branches:
+      - main
       - rtl8198c-gn866-lg7100-sk337
   workflow_dispatch:
 
